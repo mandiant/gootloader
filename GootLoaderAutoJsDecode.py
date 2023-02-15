@@ -5,7 +5,7 @@
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
 # updated           : 2023-02-09
-# version           : 3.1
+# version           : 3.1.1
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
