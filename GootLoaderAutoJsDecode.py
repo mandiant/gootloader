@@ -4,7 +4,7 @@
 # author            : @andy2002a - Andy Morales
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
-# updated           : 2023-01-23
+# updated           : 2023-02-09
 # version           : 3.1
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
@@ -241,13 +241,13 @@ def gootDecode(path):
         goot3detected = True
         
         # Get all the relevant variables from the sample
-        v3workFuncVarsPattern = re.compile('''(?:\((?:[a-zA-Z0-9_]{3,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{2,}\s{0,}\))''') # Find: (var1+var2+var3)
+        v3workFuncVarsPattern = re.compile('''(?:\((?:[a-zA-Z0-9_]{2,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{2,}\s{0,}\))''') # Find: (var1+var2+var3)
         v3WorkFuncVars = v3workFuncVarsPattern.search(round2Result)[0]
         
         stage2JavaScript=workFunc(convertConcatToString(v3WorkFuncVars,VarsDict,True))
         
         #Get all the string variables on their own line
-        strVarPattern = re.compile('''([a-zA-Z0-9_]{3,}\s{0,}=('|").*?('|");)(?=([a-zA-Z0-9_]{3,}\s{0,}=)|function)''') # Find: var='xxxxx';[var2=|function]
+        strVarPattern = re.compile('''([a-zA-Z0-9_]{2,}\s{0,}=('|").*?('|");)(?=([a-zA-Z0-9_]{2,}\s{0,}=)|function)''') # Find: var='xxxxx';[var2=|function]
         strVarsNewLine = re.sub(strVarPattern, r'\n\1\n', stage2JavaScript)
         
         # Get all the var concat on their own line
@@ -259,7 +259,7 @@ def gootDecode(path):
         finalStrConcNewLine = re.sub(finalStrConcPattern, r'\n\t\1\n', strConcatNewLine)
         
         # put 1:1 variables on their own lines
-        strVarPattern2 = re.compile('''((?:\n|^)[a-zA-Z0-9_]{3,}\s{0,}=\s{0,}[a-zA-Z0-9_]{3,};)''')# Find: var = var2;
+        strVarPattern2 = re.compile('''((?:\n|^)[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,};)''')# Find: var = var2;
         finalRegexStr = re.sub(strVarPattern2, r'\n\1\n', finalStrConcNewLine)
         
         OutputCode = 'GOOT3\n'
