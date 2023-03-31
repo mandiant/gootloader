@@ -117,7 +117,7 @@ def workFunc(inputStr):
 
 def gootDecode(path):
     # Open File
-    file = open(path)
+    file = open(path, mode="r", encoding="utf-8")
     
     # Check for the GootLoader obfuscation variant
     fileTopLines = ''.join(file.readlines(5))
