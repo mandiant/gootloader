@@ -259,8 +259,12 @@ def gootDecode(path):
         finalStrConcNewLine = re.sub(finalStrConcPattern, r'\n\t\1\n', strConcatNewLine)
         
         # put 1:1 variables on their own lines
-        strVarPattern2 = re.compile('''((?:\n|^)[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,};)''')# Find: var = var2;
-        finalRegexStr = re.sub(strVarPattern2, r'\n\1\n', finalStrConcNewLine)
+        strVar1to1Pattern = re.compile('''((?:\n|^)[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,};)''')# Find: var = var2;
+        str1to1NewLine = re.sub(strVar1to1Pattern, r'\n\1\n', finalStrConcNewLine)
+
+        # put long digits on their own lines 
+        strLongDigitPattern = re.compile(''';(\d{15,};)''') # Find: ;216541846845465456465121312313221456456465;
+        finalRegexStr = re.sub(strLongDigitPattern, r';\n\1\n', str1to1NewLine)
         
         OutputCode = 'GOOT3\n'
         
