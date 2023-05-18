@@ -32,6 +32,7 @@ import re
 # Argument parsing
 parser = argparse.ArgumentParser()
 parser.add_argument('jsFilePath', help='Path to the GOOTLOADER JS file.')
+parser.add_argument('safeUris', help='Convert http(s) to hxxp(s)')
 args = parser.parse_args()
 
 goot3detected = False
@@ -146,7 +147,7 @@ def workFunc(inputStr):
         outputStr = remainder(outputStr,var1,i)
     return outputStr
 
-def gootDecode(path):
+def gootDecode(path, safe_uris):
     # Open File
     file = open(path, mode="r", encoding="utf-8")
 
@@ -299,7 +300,10 @@ def gootDecode(path):
         outputDomains = ''
 
         for dom in maliciousDomains:
-            outputDomains += defang(dom) + '\n'
+            if safe_uris != "off":
+                outputDomains += defang(dom) + '\n'
+            else:
+                outputDomains += dom + '\n'
 
         print('\nMalicious Domains: \n\n%s' % outputDomains)
 
@@ -308,7 +312,7 @@ def gootDecode(path):
     outFile.write(OutputCode)
     outFile.close()
 
-gootDecode(args.jsFilePath)
+gootDecode(args.jsFilePath, args.safeUris)
 
 if goot3detected:
-    gootDecode('GootLoader3Stage2.js_')
+    gootDecode('GootLoader3Stage2.js_', args.safeUris)
