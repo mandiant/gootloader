@@ -33,8 +33,8 @@ import re
 parser = argparse.ArgumentParser()
 parser.add_argument('jsFilePath', help='Path to the GOOTLOADER JS file.')
 parser.add_argument('--unsafe-uris', action="store_true", help='Do not convert http(s) to hxxp(s)')
-parser.add_argument('--payload-path', required=False, default="", help='Path to the payload file that will be written')
-parser.add_argument('--stage2-path', required=False, default="", help='Path to the GootLoader3 stage 2 file that will be written')
+parser.add_argument('--payload-path', required=False, default="DecodedJsPayload.js_", help='Path to the payload file that will be written')
+parser.add_argument('--stage2-path', required=False, default="GootLoader3Stage2.js_", help='Path to the GootLoader3 stage 2 file that will be written')
 args = parser.parse_args()
 
 goot3detected = False
