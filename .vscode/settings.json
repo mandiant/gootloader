@@ -1,0 +1,22 @@
+{
+    "python.linting.flake8Args": [
+        "--max-line-length=120",
+        //Added the ignore of E203 for now : https://github.com/PyCQA/pycodestyle/issues/373
+        "--ignore=E203,W503"
+    ],
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true,
+    },
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 120,
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "--line-length=120"
+    ],
+    "isort.args": [
+        "-l",
+        "120",
+        "--profile=black",
+        // "--src=${workspaceFolder}"
+    ]
+}
