@@ -32,7 +32,9 @@ import re
 # Argument parsing
 parser = argparse.ArgumentParser()
 parser.add_argument('jsFilePath', help='Path to the GOOTLOADER JS file.')
-parser.add_argument('safeUris', help='Convert http(s) to hxxp(s)')
+parser.add_argument('--unsafe-uris', action="store_true", help='Do not convert http(s) to hxxp(s)')
+parser.add_argument('--payload-path', required=False, default="", help='Path to the payload file that will be written')
+parser.add_argument('--stage2-path', required=False, default="", help='Path to the GootLoader3 stage 2 file that will be written')
 args = parser.parse_args()
 
 goot3detected = False
@@ -147,14 +149,14 @@ def workFunc(inputStr):
         outputStr = remainder(outputStr,var1,i)
     return outputStr
 
-def gootDecode(path, safe_uris):
+def gootDecode(path, unsafe_uris = False, payload_path = None, stage2_path = None):
     # Open File
     file = open(path, mode="r", encoding="utf-8")
 
     # Check for the GootLoader obfuscation variant
     fileTopLines = ''.join(file.readlines(5))
 
-    goot3linesRegex = """GOOT3"""
+    goot3linesRegex = """//GOOT3"""
     goot3linesPattern = re.compile(goot3linesRegex, re.MULTILINE)
 
     gootloader3sample = False
@@ -267,14 +269,17 @@ def gootDecode(path, safe_uris):
         strLongDigitPattern = re.compile(''';(\d{15,};)''') # Find: ;216541846845465456465121312313221456456465;
         finalRegexStr = re.sub(strLongDigitPattern, r';\n\1\n', str1to1NewLine)
 
-        OutputCode = 'GOOT3\n'
+        OutputCode = '//GOOT3\n'
 
         for line in finalRegexStr.splitlines():
             # clean up the empty lines
             if line.strip():
                 OutputCode += (line+'\n')
 
-        OutputFileName = 'GootLoader3Stage2.js_'
+        if not stage2_path:
+            OutputFileName = 'GootLoader3Stage2.js_'
+        else:
+            OutputFileName = stage2_path
 
         print('\nScript output Saved to: %s\n' % OutputFileName)
         print('\nThe script will new attempt to deobfuscate the %s file.' % OutputFileName)
@@ -292,7 +297,10 @@ def gootDecode(path, safe_uris):
             domainsMatch = v2DomainRegex.search(round2Result)[2]
             maliciousDomains = domainsMatch.replace("[","").replace("]","").replace("\"","").replace("+(","").replace(")+","").split(',')
 
-        OutputFileName = 'DecodedJsPayload.js_'
+        if not payload_path:
+            OutputFileName = 'DecodedJsPayload.js_'
+        else:
+            OutputFileName = payload_path
 
         # Print to screen
         print('\nScript output Saved to: %s\n' % OutputFileName)
@@ -300,7 +308,7 @@ def gootDecode(path, safe_uris):
         outputDomains = ''
 
         for dom in maliciousDomains:
-            if safe_uris != "off":
+            if not unsafe_uris:
                 outputDomains += defang(dom) + '\n'
             else:
                 outputDomains += dom + '\n'
@@ -312,7 +320,7 @@ def gootDecode(path, safe_uris):
     outFile.write(OutputCode)
     outFile.close()
 
-gootDecode(args.jsFilePath, args.safeUris)
+gootDecode(args.jsFilePath, args.unsafe_uris, args.payload_path, args.stage2_path)
 
 if goot3detected:
-    gootDecode('GootLoader3Stage2.js_', args.safeUris)
+    gootDecode(args.stage2_path, args.unsafe_uris, args.payload_path, args.stage2_path)
