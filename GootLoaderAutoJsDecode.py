@@ -226,6 +226,9 @@ def gootDecode(path, unsafe_uris = False, payload_path = None, stage2_path = Non
 
     file.close()
 
+    if not Obfuscated1Text:
+        return
+
     # run the decoder
     round1Result = decodeString(Obfuscated1Text)
 
