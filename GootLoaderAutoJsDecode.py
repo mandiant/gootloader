@@ -170,7 +170,7 @@ def gootDecode(path, unsafe_uris = False, payload_path = None, stage2_path = Non
         # 3 and 2 have some overlap so enabling both flags for simplicity
         gootloader21sample = True
     else:
-        print('\nGootLoader Obfuscation Variant 2.1 or higher detected')
+        print('\nSample could be either not Gootloader, or could be GootLoader Obfuscation Variant 2.1+')
         gootloader21sample = True
 
     # reset cursor to read again
