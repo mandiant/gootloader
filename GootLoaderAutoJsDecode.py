@@ -4,8 +4,8 @@
 # author            : @andy2002a - Andy Morales
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
-# updated           : 2023-02-09
-# version           : 3.1.1
+# updated           : 2023-09-11
+# version           : 3.2
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
@@ -35,6 +35,7 @@ parser.add_argument('jsFilePath', help='Path to the GOOTLOADER JS file.')
 args = parser.parse_args()
 
 goot3detected = False
+
 
 def defang(input):
     if not input.strip():
@@ -126,6 +127,11 @@ def decodeString(scripttext):
             ans = scripttext[i] + ans
     return ans
 
+def rotateSplitText (string,count):
+    for i in range(count+1):
+        string = string[1:]+string[0]
+    return str(string)
+
 # V3 Decoding scripts converted from their JS versions
 def remainder(v1, v2, v3):
     # The 3 and the 1 could possibly change in the future
@@ -195,7 +201,7 @@ def gootDecode(path):
         # Find the obfuscated code line
         findObfuscatedPattern = re.compile('''((?<=\t)|(?<=\;))(.{800,})(\n.*\=.*\+.*)*''')
         dataToDecode = findObfuscatedPattern.search(fileData)[0].replace("\n", " ").replace("\r", " ")
-            
+        
         variables2Regex = ("""(?:([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}'(.+?)'\s{0,};)|""" # Find: var = 'str';
         """(?:([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}"(.+?)"\s{0,};)""") # Find: var = "str";
         variablesPattern = re.compile(variables2Regex, re.MULTILINE)
@@ -235,7 +241,61 @@ def gootDecode(path):
     round2Result = decodeString(CodeMatch.encode('raw_unicode_escape').decode('unicode_escape'))
     
     if round2Result.startswith('function'):
+        
         print('GootLoader Obfuscation Variant 3.0 sample detected.')
+        
+        ####################################################################################
+        
+        # File Names and scheduled task
+        fullCode = decodeString(round1Result.encode('raw_unicode_escape').decode('unicode_escape'))
+        
+        # Check to see if the code has been reversed, and reverse it back to normal if so
+        if 'noitcnuf' in fullCode:
+            fullCode = fullCode[::-1]
+        
+        # Find the offset of the scheduled task name
+        taskCreationRegexPattern = re.compile('''\((\w+),\s?(\w+),\s?6,\s['"]{2}\s?,\s?['"]{2}\s?,\s?3\s?\)''') # Find: (str1, str2, 6, "" , "" , 3)
+        taskCreationVarname = taskCreationRegexPattern.search(fullCode).group(1)
+        
+        taskNameOffsetPattern = re.compile('''\}''' + taskCreationVarname + '''\s?=\s\w{1,2}\((\d{1,3})\);''') # Find: }str1 = Z(41);
+        taskNameOffset = int(taskNameOffsetPattern.search(fullCode).group(1))
+        
+        # Find the '|' separated string 
+        splitTextPattern= re.compile('''"((?:.{3,30}?\|.{3,30}){5,})";''') # Find: "text|text2|text3";
+        splitTextArray = splitTextPattern.search(fullCode).group(1).split('|')
+        
+        # un-rotate the strings
+        fixedStrings = []
+        for i in range(len(splitTextArray)):
+            fixedStrings.append(rotateSplitText(splitTextArray[i], i))
+        
+        # Find the file names in the array
+        for str in fixedStrings:
+            if str.endswith('.log'):
+                s2LogFileName = str
+            elif str.endswith('.js'):
+                s2JsFileName = str
+        
+        #In some instances the .log file was outside of the "|" separated string. Try to find it outside
+        if 's2LogFileName' not in locals():
+            s2LogFileNamePattern = re.compile('''["']([a-zA-Z0-9_\-\s]+\.log)["']''') # Find: "Example Engineering.log"
+            s2LogFileName = s2LogFileNamePattern.search(fullCode).group(1)
+                
+        Stage2Data = '\nFile and Scheduled task data:\n'
+        
+        FileTaskFileName = 'FileAndTaskData.txt'
+        
+        Stage2Data += '\nLog File Name:       ' + s2LogFileName
+        Stage2Data += '\nJS File Name:        ' + s2JsFileName
+        Stage2Data += '\nScheduled Task Name: ' + fixedStrings[taskNameOffset]
+        Stage2Data += '\n\nData Saved to: ' + FileTaskFileName + '\n'
+        
+        outFile = open(FileTaskFileName, "w")
+        outFile.write(Stage2Data)
+        outFile.close()
+        
+        print(Stage2Data)
+        ####################################################################################
         
         global goot3detected
         goot3detected = True
@@ -261,7 +321,7 @@ def gootDecode(path):
         # put 1:1 variables on their own lines
         strVar1to1Pattern = re.compile('''((?:\n|^)[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,};)''')# Find: var = var2;
         str1to1NewLine = re.sub(strVar1to1Pattern, r'\n\1\n', finalStrConcNewLine)
-
+        
         # put long digits on their own lines 
         strLongDigitPattern = re.compile(''';(\d{15,};)''') # Find: ;216541846845465456465121312313221456456465;
         finalRegexStr = re.sub(strLongDigitPattern, r';\n\1\n', str1to1NewLine)
@@ -290,12 +350,12 @@ def gootDecode(path):
             v2DomainRegex = re.compile(r'(.*)(\[\".*?\"\])(.*)')
             domainsMatch = v2DomainRegex.search(round2Result)[2]
             maliciousDomains = domainsMatch.replace("[","").replace("]","").replace("\"","").replace("+(","").replace(")+","").split(',')
-
+        
         OutputFileName = 'DecodedJsPayload.js_'
-
+        
         # Print to screen
         print('\nScript output Saved to: %s\n' % OutputFileName)
-
+        
         outputDomains = ''
         
         for dom in maliciousDomains:
