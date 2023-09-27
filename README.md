@@ -17,7 +17,7 @@
   * [Decoding the CSV File](#decoding-the-csv-file)
 
 
-# Javacript Decoding
+# JavaScript Decoding
 
 
 ## Automated Decoding
@@ -27,7 +27,10 @@ Run the script `GootLoaderAutoJsDecode.py` against the `.js` file.
 python GootLoaderAutoJsDecode.py "evil.js"
 ```
 
-The script will output the file `DecodedJsPayload.js_`. You can use a CyberChef's `Generic Code Beautify` in order to make the content easier to read.
+
+The script will output the files below:
+- `FileAndTaskData.txt` - Contains the names of the scheduled task and dropped files.
+- `DecodedJsPayload.js_` - The decoded payload that runs a PowerShell command. You can use a CyberChef's `Generic Code Beautify` in order to make the content easier to read.
 
 ![](rsc/dfvdfvdfvdf.png)
 
