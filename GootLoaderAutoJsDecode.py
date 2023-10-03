@@ -5,7 +5,7 @@
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
 # updated           : 2023-09-11
-# version           : 3.2
+# version           : 3.3
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
@@ -340,6 +340,11 @@ def gootDecode(path):
     else:
         if gootloader3sample:
             OutputCode = round2Result.replace("'+'",'').replace("')+('",'').replace("+()+",'')
+            
+            # Check to see if the code has been reversed, and reverse it back to normal if so
+            # Sample MD5: 2e6e43e846c5de3ecafdc5f416b72897
+            if 'sptth' in OutputCode:
+                OutputCode = OutputCode[::-1]
             
             v3DomainRegex = re.compile('''(?:(?:https?):\/\/)[^\[|^\]|^\/|^\\|\s]*\.[^'"]+''')
             
