@@ -5,7 +5,7 @@
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
 # updated           : 2023-09-11
-# version           : 3.3
+# version           : 3.5
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
@@ -152,6 +152,15 @@ def workFunc(inputStr):
         outputStr = remainder(outputStr,var1,i)
     return outputStr
 
+def findFileInStr(fileExtension, stringToSearch):
+    fileExtensionPattern = re.compile('''["']([a-zA-Z0-9_\-\s]+\.''' + fileExtension + ''')["']''') ## Find: "Example Engineering.log"
+    regexMatch = fileExtensionPattern.search(stringToSearch)
+    if (regexMatch):
+        dataFound = regexMatch.group(1)
+    else:
+        dataFound = 'NOT FOUND'
+    return dataFound
+
 def gootDecode(path):
     # Open File
     file = open(path, mode="r", encoding="utf-8")
@@ -253,13 +262,6 @@ def gootDecode(path):
         if 'noitcnuf' in fullCode:
             fullCode = fullCode[::-1]
         
-        # Find the offset of the scheduled task name
-        taskCreationRegexPattern = re.compile('''\((\w+),\s?(\w+),\s?6,\s['"]{2}\s?,\s?['"]{2}\s?,\s?3\s?\)''') # Find: (str1, str2, 6, "" , "" , 3)
-        taskCreationVarname = taskCreationRegexPattern.search(fullCode).group(1)
-        
-        taskNameOffsetPattern = re.compile('''\}''' + taskCreationVarname + '''\s?=\s\w{1,2}\((\d{1,3})\);''') # Find: }str1 = Z(41);
-        taskNameOffset = int(taskNameOffsetPattern.search(fullCode).group(1))
-        
         # Find the '|' separated string 
         splitTextPattern= re.compile('''"((?:.{3,30}?\|.{3,30}){5,})";''') # Find: "text|text2|text3";
         splitTextArray = splitTextPattern.search(fullCode).group(1).split('|')
@@ -276,18 +278,38 @@ def gootDecode(path):
             elif str.endswith('.js'):
                 s2JsFileName = str
         
-        #In some instances the .log file was outside of the "|" separated string. Try to find it outside
+        #In some instances the .log/.js file was outside of the "|" separated string. Try to find it outside
         if 's2LogFileName' not in locals():
-            s2LogFileNamePattern = re.compile('''["']([a-zA-Z0-9_\-\s]+\.log)["']''') # Find: "Example Engineering.log"
-            s2LogFileName = s2LogFileNamePattern.search(fullCode).group(1)
-                
+            s2LogFileName = findFileInStr('log', fullCode)
+        if 's2JsFileName' not in locals():
+            s2JsFileName = findFileInStr('js', fullCode)
+        
+        # Find the offset of the scheduled task name
+        taskCreationRegexPattern = re.compile('''\((\w+),\s?(\w+),\s?6,\s['"]{2}\s?,\s?['"]{2}\s?,\s?3\s?\)''') # Find: (str1, str2, 6, "" , "" , 3)
+        taskCreationVarname = taskCreationRegexPattern.search(fullCode).group(1)
+        taskNameOffsetPattern = re.compile('''\}''' + taskCreationVarname + '''\s?=\s\w{1,2}\((\d{1,3})\);''') # Find: }str1 = Z(41);
+        
+        taskNameOffsetMatch = taskNameOffsetPattern.search(fullCode)
+        
+        if taskNameOffsetMatch:
+            taskNameOffset = int(taskNameOffsetMatch.group(1))
+            scheduledTaskName = fixedStrings[taskNameOffset]
+        else:
+            # MD5 9565187442f857bd47c8ab0859009752 had the task name in plain text
+            taskNameStrPattern = re.compile('''\}''' + taskCreationVarname + '''\s?=\s"(.{10,232})";''') # Find: }str1 = "Task Name";
+            taskNameStrMatch = taskNameStrPattern.search(fullCode)
+            if taskNameStrMatch:
+                scheduledTaskName = taskNameStrMatch.group(1)
+            else:
+                scheduledTaskName = 'NOT FOUND'
+        
         Stage2Data = '\nFile and Scheduled task data:\n'
         
         FileTaskFileName = 'FileAndTaskData.txt'
         
         Stage2Data += '\nLog File Name:       ' + s2LogFileName
         Stage2Data += '\nJS File Name:        ' + s2JsFileName
-        Stage2Data += '\nScheduled Task Name: ' + fixedStrings[taskNameOffset]
+        Stage2Data += '\nScheduled Task Name: ' + scheduledTaskName
         Stage2Data += '\n\nData Saved to: ' + FileTaskFileName + '\n'
         
         outFile = open(FileTaskFileName, "w")
