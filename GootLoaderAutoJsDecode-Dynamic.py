@@ -5,7 +5,7 @@
 # author            : @andy2002a - Andy Morales
 # date              : 2021-12-01
 # updated           : 2023-02-15
-# version           : 3.1.1
+# version           : 3.2
 # usage             : python GootLoaderAutoJsDecode-Dynamic malicious.js
 # usage             : python GootLoaderAutoJsDecode-Dynamic malicious.js -y
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
@@ -235,7 +235,7 @@ def gootDecode(path):
         exec("global stage2JavaScript; stage2JavaScript = workFunc(%s)" % v3WorkFuncVars, globals(), locals())
         
         #Get all the string variables on their own line
-        strVarPattern = re.compile('''([a-zA-Z0-9_]{2,}\s{0,}=('|").*?('|");)(?=([a-zA-Z0-9_]{2,}\s{0,}=)|function)''') # Find: var='xxxxx';[var2=|function]
+        strVarPattern = re.compile(r'''([a-zA-Z0-9_]{2,}\s{0,}=(["'])((?:\\\2|(?:(?!\2)).)*)(\2);)(?=([a-zA-Z0-9_]{2,}\s{0,}=)|function)''') # Find: var='xxxxx';[var2=|function]
         strVarsNewLine = re.sub(strVarPattern, r'\n\1\n', stage2JavaScript)
         
         # Get all the var concat on their own line
