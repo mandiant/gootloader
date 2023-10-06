@@ -329,7 +329,7 @@ def gootDecode(path):
         stage2JavaScript=workFunc(convertConcatToString(v3WorkFuncVars,VarsDict,True))
         
         #Get all the string variables on their own line
-        strVarPattern = re.compile('''([a-zA-Z0-9_]{2,}\s{0,}=('|").*?('|");)(?=([a-zA-Z0-9_]{2,}\s{0,}=)|function)''') # Find: var='xxxxx';[var2=|function]
+        strVarPattern = re.compile(r'''([a-zA-Z0-9_]{2,}\s{0,}=(["'])((?:\\\2|(?:(?!\2)).)*)(\2);)(?=([a-zA-Z0-9_]{2,}\s{0,}=)|function)''') # Find: var='xxxxx';[var2=|function]
         strVarsNewLine = re.sub(strVarPattern, r'\n\1\n', stage2JavaScript)
         
         # Get all the var concat on their own line
