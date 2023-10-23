@@ -71,6 +71,7 @@ def defang(input):
         result = result.replace("http", "hxxp")
     return result
 
+
 def ConvertVarsToDict(inArray):
     # Converts variables to a dict
     # Adds the first 2 items only since the rest is not part of the match
@@ -87,6 +88,7 @@ def ConvertVarsToDict(inArray):
         varDict.update({arItem[0]:arItem[1]})
     return varDict
 
+
 def convertConcatToString(inputConcatMatches,inputVarsDict,noEquals=False):
     # Joins multiple concat operations into a string
     
@@ -97,8 +99,9 @@ def convertConcatToString(inputConcatMatches,inputVarsDict,noEquals=False):
     
     for index, concatItem in enumerate(inputConcatMatches):
         # Remove any unwanted characters and split on '=' 
-        splitItem = concatItem.replace(';','').replace(' ','').replace('\t','').split('=')
         
+        splitItem = re.sub(r'[;\s\(\)]', '',concatItem).split('=')
+
         currentLineString = ''
         
         for additionItem in splitItem[1].split('+'):
@@ -117,6 +120,7 @@ def convertConcatToString(inputConcatMatches,inputVarsDict,noEquals=False):
             # return the full encoded line fixing escaped chars
             return currentLineString.encode('raw_unicode_escape').decode('unicode_escape')
 
+
 def decodeString(scripttext):
     # Gootloader decode function
     ans = ""
@@ -127,10 +131,12 @@ def decodeString(scripttext):
             ans = scripttext[i] + ans
     return ans
 
+
 def rotateSplitText (string,count):
     for i in range(count+1):
         string = string[1:]+string[0]
     return str(string)
+
 
 # V3 Decoding scripts converted from their JS versions
 def remainder(v1, v2, v3):
@@ -141,9 +147,11 @@ def remainder(v1, v2, v3):
         rtn = v2+v1
     return rtn
 
+
 def rtrSub(inputStr, idx1): 
     # use this odd format of substring so that it matches the way JS works
     return inputStr[idx1:(idx1+1)]
+
 
 def workFunc(inputStr):
     outputStr = ''
@@ -152,14 +160,16 @@ def workFunc(inputStr):
         outputStr = remainder(outputStr,var1,i)
     return outputStr
 
+
 def findFileInStr(fileExtension, stringToSearch):
-    fileExtensionPattern = re.compile('''["']([a-zA-Z0-9_\-\s]+\.''' + fileExtension + ''')["']''') ## Find: "Example Engineering.log"
+    fileExtensionPattern = re.compile('''["']([a-zA-Z0-9_\-\s]+\.''' + fileExtension + ''')["']''')  ## Find: "Example Engineering.log"
     regexMatch = fileExtensionPattern.search(stringToSearch)
     if (regexMatch):
         dataFound = regexMatch.group(1)
     else:
         dataFound = 'NOT FOUND'
     return dataFound
+
 
 def gootDecode(path):
     # Open File
@@ -196,13 +206,17 @@ def gootDecode(path):
         
         # Regex Group 1 = variable name
         # Regex Group 2 = string
-        variables21Regex = ("""(?:^([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}'(.*)'\s{0,};)|""" # Find: var='str';
-        """(?:^([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}"(.*)"\s{0,};)|""" # Find: var = "str";
-        """(?:^([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}(\d{1,});)""") # Find: var = 1234;
+        variables21Regex = (
+            """(?:^([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}'(.*)'\s{0,};)|"""  # Find: var='str';
+            """(?:^([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}"(.*)"\s{0,};)|"""  # Find: var = "str";
+            """(?:^([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}(\d{1,});)"""  # Find: var = 1234;
+        )
         variablesPattern = re.compile(variables21Regex, re.MULTILINE)
         
-        concat21Regex = ("""(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{2,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{2,}\s{0,};)|""" # Find: var1 = var2+var3+var4;
-        """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,}\s{0,};)""") # Find: var1 = var2;
+        concat21Regex = (
+            """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:\(?[a-zA-Z0-9_]{2,}\)?\s{0,}(?:\+|\-)\s{0,}){1,}\(?[a-zA-Z0-9_]{2,}\)?\s{0,};)|""" # Find: var1 = var2+var3+(var4);
+            """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,}\s{0,};)"""
+        ) # Find: var1 = var2;
         concatPattern = re.compile(concat21Regex, re.MULTILINE)
     else:
         # pre-2.1 sample
@@ -211,12 +225,16 @@ def gootDecode(path):
         findObfuscatedPattern = re.compile('''((?<=\t)|(?<=\;))(.{800,})(\n.*\=.*\+.*)*''')
         dataToDecode = findObfuscatedPattern.search(fileData)[0].replace("\n", " ").replace("\r", " ")
         
-        variables2Regex = ("""(?:([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}'(.+?)'\s{0,};)|""" # Find: var = 'str';
-        """(?:([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}"(.+?)"\s{0,};)""") # Find: var = "str";
+        variables2Regex = (
+            """(?:([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}'(.+?)'\s{0,};)|"""  # Find: var = 'str';
+            """(?:([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}"(.+?)"\s{0,};)"""  # Find: var = "str";
+        )
         variablesPattern = re.compile(variables2Regex, re.MULTILINE)
         
-        concat2Regex = ("""(?:[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{2,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{2,}\s{0,};)|""" # Find: var1 = var2+var3+var4;
-        """(?:[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,}\s{0,};)""") # Find: var1 = var2;
+        concat2Regex = (
+            """(?:[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{2,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{2,}\s{0,};)|"""  # Find: var1 = var2+var3+var4;
+            """(?:[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,}\s{0,};)"""  # Find: var1 = var2;
+        )
         concatPattern = re.compile(concat2Regex, re.MULTILINE)
     
     # Find all the variables
@@ -229,7 +247,9 @@ def gootDecode(path):
     
     if gootloader21sample:
         # Some variants have the final variable in the middle of the code. Search for it separately so that it shows up last.
-        lastConcat21Regex = ("""(?:^\t[a-zA-Z0-9_]{2,}\s{0,}=(?:\s{0,}[a-zA-Z0-9_]{2,}\s{0,}\+?\s{0,}){5,}\s{0,};)""") # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
+        lastConcat21Regex = (
+            """(?:^\t[a-zA-Z0-9_]{2,}\s{0,}=(?:\s{0,}[a-zA-Z0-9_]{2,}\s{0,}\+?\s{0,}){5,}\s{0,};)"""  # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
+        ) 
         lastConcatPattern = re.compile(lastConcat21Regex, re.MULTILINE)
         
         concatAllmatches += list(sorted(lastConcatPattern.findall(fileData), key = len))
@@ -394,6 +414,7 @@ def gootDecode(path):
     outFile = open(OutputFileName, "w")
     outFile.write(OutputCode)
     outFile.close()
+
 
 gootDecode(args.jsFilePath)
 
