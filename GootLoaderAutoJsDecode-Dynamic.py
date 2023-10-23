@@ -146,10 +146,12 @@ def gootDecode(path):
     
     if gootloader21sample:
         # Sample is GootLoader Obfuscation Variant 2.1
-        goot21regex = ("""(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}'.*'\s{0,};)|(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}".*"\s{0,};)|""" # Find: var = 'str'; and var = "str";
-        """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{2,}\s{0,}(?:\+|-)\s{0,}){1,}[a-zA-Z0-9_]{2,}\s{0,};)|""" # Find: var1 = var2+var3-var4;
-        """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,}\s{0,};)|""" # Find: var1 = var2;
-        """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}\d{1,};)""") # Find: var = 1234;
+        goot21regex = (
+            """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}'.*'\s{0,};)|(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}".*"\s{0,};)|"""  # Find: var = 'str'; and var = "str";
+            """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:\(?[a-zA-Z0-9_]{2,}\)?\s{0,}(?:\+|\-)\s{0,}){1,}\(?[a-zA-Z0-9_]{2,}\)?\s{0,};)|"""  # Find: var1 = var2+var3+(var4);
+            """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,}\s{0,};)|"""  # Find: var1 = var2;
+            """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}\d{1,};)"""  # Find: var = 1234;
+        ) 
         
         # initialize regex pattern
         goot21Pattern = re.compile(goot21regex, re.MULTILINE)
@@ -157,7 +159,9 @@ def gootDecode(path):
         goot21allMatches = goot21Pattern.findall(fileData)
         
         # Some variants have the final variable in the middle of the code. Search for it separately so that it shows up last.
-        goot21regexLastVar = ("""(?:^\t[a-zA-Z0-9_]{2,}\s{0,}=(?:\s{0,}[a-zA-Z0-9_]{2,}\s{0,}\+?\s{0,}){5,}\s{0,};)""") # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
+        goot21regexLastVar = (
+            """(?:^\t[a-zA-Z0-9_]{2,}\s{0,}=(?:\s{0,}[a-zA-Z0-9_]{2,}\s{0,}\+?\s{0,}){5,}\s{0,};)"""  # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
+        )
         
         goot21regexLastVarPattern = re.compile(goot21regexLastVar, re.MULTILINE) 
         
