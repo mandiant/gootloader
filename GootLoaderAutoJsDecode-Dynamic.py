@@ -4,8 +4,8 @@
 # author            : @g0vandS - Govand Sinjari
 # author            : @andy2002a - Andy Morales
 # date              : 2021-12-01
-# updated           : 2023-02-15
-# version           : 3.2
+# updated           : 2024-01-08
+# version           : 3.7
 # usage             : python GootLoaderAutoJsDecode-Dynamic malicious.js
 # usage             : python GootLoaderAutoJsDecode-Dynamic malicious.js -y
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
@@ -267,7 +267,7 @@ def gootDecode(path):
         print('\nThe script will new attempt to deobfuscate the %s file.' % OutputFileName)
     else:
         if gootloader3sample:
-            OutputCode = round2Result.replace("'+'",'').replace("')+('",'').replace("+()+",'')
+            OutputCode = round2Result.replace("'+'",'').replace("')+('",'').replace("+()+",'').replace("?+?",'')
             
             v3DomainRegex = re.compile('''(?:(?:https?):\/\/)[^\[|^\]|^\/|^\\|\s]*\.[^'"]+''')
             
