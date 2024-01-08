@@ -4,8 +4,8 @@
 # author            : @andy2002a - Andy Morales
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
-# updated           : 2023-09-11
-# version           : 3.6
+# updated           : 2024-01-08
+# version           : 3.7
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
@@ -212,14 +212,14 @@ def getFileandTaskData(inputString):
     
     # Find the file names in the array
     for str in fixedStrings:
-        if str.endswith('.log'):
-            s2LogFileName = str
+        if str.endswith('.log') or str.endswith('.dat'):
+            s2FirstFileName = str
         elif str.endswith('.js'):
             s2JsFileName = str
     
     #In some instances the .log/.js file was outside of the "|" separated string. Try to find it outside
-    if 's2LogFileName' not in locals():
-        s2LogFileName = findFileInStr('log', inputString)
+    if 's2FirstFileName' not in locals():
+        s2FirstFileName = findFileInStr('(?:log|dat)', inputString)
     if 's2JsFileName' not in locals():
         s2JsFileName = findFileInStr('js', inputString)
     
@@ -252,13 +252,14 @@ def getFileandTaskData(inputString):
     
     FileTaskFileName = 'FileAndTaskData.txt'
     
-    Stage2Data += '\nLog File Name:       ' + s2LogFileName
-    Stage2Data += '\nJS File Name:        ' + s2JsFileName
-    Stage2Data += '\nScheduled Task Name: ' + scheduledTaskName
-    Stage2Data += '\n\nData Saved to: ' + FileTaskFileName
+    Stage2Data += '\nFirst File Name:       ' + s2FirstFileName
+    Stage2Data += '\nJS File Name:          ' + s2JsFileName
+    Stage2Data += '\nScheduled Task Name:   ' + scheduledTaskName
     
     with open(FileTaskFileName, mode="w") as file:
         file.write(Stage2Data)
+    
+    Stage2Data += '\n\nData Saved to: ' + FileTaskFileName
     
     print('\n'+Stage2Data+'\n')
 
@@ -390,7 +391,7 @@ def parseRound2Data(round2InputStr, round1InputStr, variablesDict, isGootloader3
         print('\nThe script will new attempt to deobfuscate the %s file.' % outputFileName)
     else:
         if isGootloader3sample:
-            outputCode = round2InputStr.replace("'+'",'').replace("')+('",'').replace("+()+",'')
+            outputCode = round2InputStr.replace("'+'",'').replace("')+('",'').replace("+()+",'').replace("?+?",'')
             
             # Check to see if the code has been reversed, and reverse it back to normal if so
             # Sample MD5: 2e6e43e846c5de3ecafdc5f416b72897
