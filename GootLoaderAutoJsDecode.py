@@ -76,14 +76,7 @@ def ConvertVarsToDict(inArray):
     # Converts variables to a dict
     # Adds the first 2 items only since the rest is not part of the match
     varDict = {}
-    
-    def removeEmptyTuples(tuples):
-        tuples = [t for t in tuples if t]
-        if len(tuples) == 1:
-            # the var was probably an empty string and the function wiped it out. Add an empty string back.
-            tuples += ['']
-        return tuples
-    
+
     for arItem in inArray:
         varDict.update({arItem[0]:arItem[1]})
     return varDict
@@ -211,11 +204,11 @@ def getFileandTaskData(inputString):
         fixedStrings.append(rotateSplitText(splitTextArray[i], i))
     
     # Find the file names in the array
-    for str in fixedStrings:
-        if str.endswith('.log') or str.endswith('.dat'):
-            s2FirstFileName = str
-        elif str.endswith('.js'):
-            s2JsFileName = str
+    for fixedString in fixedStrings:
+        if fixedString.endswith('.log') or fixedString.endswith('.dat'):
+            s2FirstFileName = fixedString
+        elif fixedString.endswith('.js'):
+            s2JsFileName = fixedString
     
     #In some instances the .log/.js file was outside of the "|" separated string. Try to find it outside
     if 's2FirstFileName' not in locals():
