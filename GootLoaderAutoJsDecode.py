@@ -4,8 +4,8 @@
 # author            : @andy2002a - Andy Morales
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
-# updated           : 2024-01-08
-# version           : 3.7
+# updated           : 2024-07-26
+# version           : 3.7.2
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
@@ -196,7 +196,16 @@ def getFileandTaskData(inputString):
         '''"((?:.{3,30}?\|.{3,30}){5,})";'''  # Find: "text|text2|text3";
     )
     
-    splitTextArray = splitTextPattern.search(inputString).group(1).split('|')
+    try:
+        splitTextArray = splitTextPattern.search(inputString).group(1).split('|')
+    except:
+        # some new samples are using @ as a separator rather than | : MD5: d5e60e0941ebcef5436406a7ecf1d0f1
+        splitTextPattern= re.compile(
+            '''"((?:.{3,30}?\@.{3,30}){5,})";'''  # Find: "text@text2@text3";
+        )
+
+        splitTextArray = splitTextPattern.search(inputString).group(1).split('@')
+
     
     # un-rotate the strings
     fixedStrings = []
@@ -371,7 +380,10 @@ def parseRound2Data(round2InputStr, round1InputStr, variablesDict, isGootloader3
         print('GootLoader Obfuscation Variant 3.0 sample detected.')
         
         # File Names and scheduled task
-        getFileandTaskData(decodeString(round1InputStr.encode('raw_unicode_escape').decode('unicode_escape')))
+        try:
+            getFileandTaskData(decodeString(round1InputStr.encode('raw_unicode_escape').decode('unicode_escape')))
+        except:
+            print('Unable to parse Scheduled Task and Second Stage File Names')
 
         global goot3detected
         goot3detected = True
