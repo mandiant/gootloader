@@ -4,8 +4,8 @@
 # author            : @andy2002a - Andy Morales
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
-# updated           : 2024-07-26
-# version           : 3.7.2
+# updated           : 2024-11-06
+# version           : 3.7.3
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
@@ -186,25 +186,43 @@ def getGootVersion(topFileData):
     return gloader21sample, gloader3sample
 
 
+def separateFileAndTaskString(regexPattern, delimiter, inputString):
+    # searches and returns text that has been joined together with a delimiter
+    splitTextPattern= re.compile(regexPattern)
+
+    splitTextResult = splitTextPattern.search(inputString)
+
+    if splitTextResult:
+        splitTextArray = splitTextResult.group(1).split(delimiter)
+        return splitTextArray
+    else:
+        return None
+
+
 def getFileandTaskData(inputString):
     # Check to see if the code has been reversed, and reverse it back to normal if so
     if 'noitcnuf' in inputString:
         inputString = inputString[::-1]
     
-    # Find the '|' separated string 
-    splitTextPattern= re.compile(
-        '''"((?:.{3,30}?\|.{3,30}){5,})";'''  # Find: "text|text2|text3";
-    )
-    
-    try:
-        splitTextArray = splitTextPattern.search(inputString).group(1).split('|')
-    except:
-        # some new samples are using @ as a separator rather than | : MD5: d5e60e0941ebcef5436406a7ecf1d0f1
-        splitTextPattern= re.compile(
-            '''"((?:.{3,30}?\@.{3,30}){5,})";'''  # Find: "text@text2@text3";
-        )
+    # Find the string that has been joined together with a delimiter (usually by |)
+    # some new samples are using @ as a separator rather than | : MD5: d5e60e0941ebcef5436406a7ecf1d0f1
+    regexPatternAndDelimiter = [
+        [r'''"((?:.{3,30}?\|.{3,30}){5,})";''',"|"], # Find: "text|text2|text3";
+        [r'''"((?:.{3,30}?\@.{3,30}){5,})";''',"@"]  # Find: "text@text2@text3";
+        ]
 
-        splitTextArray = splitTextPattern.search(inputString).group(1).split('@')
+    for patternDelim in regexPatternAndDelimiter:
+        separationResult = separateFileAndTaskString(patternDelim[0], patternDelim[1], inputString)
+
+        if separationResult:
+            splitTextArray = separationResult
+            #exit the loop if we get a hit
+            break
+
+        if patternDelim == regexPatternAndDelimiter[-1]:
+            # hit the last delimiter without getting a hit.
+            logger.debug("Reached the last FileAndTaskData delimiter without getting a hit.")
+            return None
 
     
     # un-rotate the strings
@@ -459,7 +477,7 @@ def gootDecode(path):
     if gootloader21sample:
         # Some variants have the final variable in the middle of the code. Search for it separately so that it shows up last.
         lastConcatPattern = re.compile(
-            """(?:^\t[a-zA-Z0-9_]{2,}\s{0,}=(?:\s{0,}[a-zA-Z0-9_]{2,}\s{0,}\+?\s{0,}){5,}\s{0,};)"""  # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
+            """(?:^\t[a-zA-Z0-9_]{2,}\s{0,}=(?:\s{0,}\(?[a-zA-Z0-9_]{2,}\s{0,}\+?\s{0,}){5,}\s{0,}\)?;)"""  # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
             , re.MULTILINE
         )
         
