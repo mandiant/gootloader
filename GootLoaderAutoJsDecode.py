@@ -5,7 +5,7 @@
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
 # updated           : 2024-11-06
-# version           : 3.7.3
+# version           : 3.7.4
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
@@ -232,7 +232,7 @@ def getFileandTaskData(inputString):
     
     # Find the file names in the array
     for fixedString in fixedStrings:
-        if fixedString.endswith('.log') or fixedString.endswith('.dat'):
+        if fixedString.endswith(('.log', '.dat', '.txt')):
             s2FirstFileName = fixedString
         elif fixedString.endswith('.js'):
             s2JsFileName = fixedString
