@@ -4,8 +4,8 @@
 # author            : @andy2002a - Andy Morales
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
-# updated           : 2024-11-06
-# version           : 3.7.4
+# updated           : 2024-12-18
+# version           : 3.7.5
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
@@ -232,7 +232,7 @@ def getFileandTaskData(inputString):
     
     # Find the file names in the array
     for fixedString in fixedStrings:
-        if fixedString.endswith(('.log', '.dat', '.txt')):
+        if fixedString.endswith(('.log', '.dat', '.txt', '.xml')):
             s2FirstFileName = fixedString
         elif fixedString.endswith('.js'):
             s2JsFileName = fixedString
@@ -287,7 +287,7 @@ def getFileandTaskData(inputString):
 def invokeStage2Decode(inputString, inputVarsDict):
     # Get all the relevant variables from the sample
     v3workFuncVarsPattern = re.compile(
-        '''(?:\((?:[a-zA-Z0-9_]{2,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{2,}\s{0,}\))'''  # Find: (var1+var2+var3)
+        '''(?:\((?:[a-zA-Z0-9_]{1,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{1,}\s{0,}\))'''  # Find: (var1+var2+var3)
     )
     v3WorkFuncVars = v3workFuncVarsPattern.search(inputString)[0]
 
@@ -295,25 +295,25 @@ def invokeStage2Decode(inputString, inputVarsDict):
 
     #Get all the string variables on their own line
     strVarPattern = re.compile(
-        r'''([a-zA-Z0-9_]{2,}\s{0,}=(["'])((?:\\\2|(?:(?!\2)).)*)(\2);)(?=([a-zA-Z0-9_]{2,}\s{0,}=)|function)'''  # Find: var='xxxxx';[var2=|function]
+        r'''([a-zA-Z0-9_]{1,}\s{0,}=(["'])((?:\\\2|(?:(?!\2)).)*)(\2);)(?=([a-zA-Z0-9_]{1,}\s{0,}=)|function)'''  # Find: var='xxxxx';[var2=|function]
     )
     strVarsNewLine = re.sub(strVarPattern, r'\n\1\n', stage2JavaScript)
 
     # Get all the var concat on their own line
     strConcPattern = re.compile(
-        '''([a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{2,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{2,}\s{0,};)'''  # Find: var1 = var2+var3
+        '''([a-zA-Z0-9_]{1,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{1,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{1,}\s{0,};)'''  # Find: var1 = var2+var3
     )
     strConcatNewLine = re.sub(strConcPattern, r'\n\1\n', strVarsNewLine)
 
     # Attempt to find the last variable and add a tab in front of it. This search is imperfect since the line could be shorter than what this regex picks up.
     finalStrConcPattern = re.compile(
-        '''([a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{2,}\s{0,}\+\s{0,}){5,}[a-zA-Z0-9_]{2,}\s{0,};)'''  # Find: var0 = var1+var2+var3+var4+var5+var6
+        '''([a-zA-Z0-9_]{1,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{1,}\s{0,}\+\s{0,}){5,}[a-zA-Z0-9_]{1,}\s{0,};)'''  # Find: var0 = var1+var2+var3+var4+var5+var6
     )
     finalStrConcNewLine = re.sub(finalStrConcPattern, r'\n\t\1\n', strConcatNewLine)
 
     # put 1:1 variables on their own lines
     strVar1to1Pattern = re.compile(
-        '''((?:\n|^)[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,};)'''  # Find: var = var2;
+        '''((?:\n|^)[a-zA-Z0-9_]{1,}\s{0,}=\s{0,}[a-zA-Z0-9_]{1,};)'''  # Find: var = var2;
     )
     str1to1NewLine = re.sub(strVar1to1Pattern, r'\n\1\n', finalStrConcNewLine)
 
@@ -353,29 +353,29 @@ def getVariableAndConcatPatterns(isGloader21Sample):
         # Regex Group 1 = variable name
         # Regex Group 2 = string
         varPattern = re.compile(
-            """(?:^([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}'(.*)'\s{0,};)|"""  # Find: var='str';
-            """(?:^([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}"(.*)"\s{0,};)|"""  # Find: var = "str";
-            """(?:^([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}(\d{1,});)"""  # Find: var = 1234;
+            """(?:^([a-zA-Z0-9_]{1,})\s{0,}=\s{0,}'(.*)'\s{0,};)|"""  # Find: var='str';
+            """(?:^([a-zA-Z0-9_]{1,})\s{0,}=\s{0,}"(.*)"\s{0,};)|"""  # Find: var = "str";
+            """(?:^([a-zA-Z0-9_]{1,})\s{0,}=\s{0,}(\d{1,});)"""  # Find: var = 1234;
             , re.MULTILINE
         )
         
         concPattern = re.compile(
-            """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:\(?[a-zA-Z0-9_]{2,}\)?\s{0,}(?:\+|\-)\s{0,}){1,}\(?[a-zA-Z0-9_]{2,}\)?\s{0,};)|"""  # Find: var1 = var2+var3+(var4);
-            """(?:^[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,}\s{0,};)"""  # Find: var1 = var2;
+            """(?:^[a-zA-Z0-9_]{1,}\s{0,}=\s{0,}(?:\(?[a-zA-Z0-9_]{1,}\)?\s{0,}(?:\+|\-)\s{0,}){1,}\(?[a-zA-Z0-9_]{1,}\)?\s{0,};)|"""  # Find: var1 = var2+var3+(var4);
+            """(?:^[a-zA-Z0-9_]{1,}\s{0,}=\s{0,}[a-zA-Z0-9_]{1,}\s{0,};)"""  # Find: var1 = var2;
             , re.MULTILINE
         )
     else:
         # pre-2.1 sample
         # Find the obfuscated code line
         varPattern = re.compile(
-            """(?:([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}'(.+?)'\s{0,};)|"""  # Find: var = 'str';
-            """(?:([a-zA-Z0-9_]{2,})\s{0,}=\s{0,}"(.+?)"\s{0,};)"""  # Find: var = "str";
+            """(?:([a-zA-Z0-9_]{1,})\s{0,}=\s{0,}'(.+?)'\s{0,};)|"""  # Find: var = 'str';
+            """(?:([a-zA-Z0-9_]{1,})\s{0,}=\s{0,}"(.+?)"\s{0,};)"""  # Find: var = "str";
             , re.MULTILINE
         )
         
         concPattern = re.compile(
-            """(?:[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{2,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{2,}\s{0,};)|"""  # Find: var1 = var2+var3+var4;
-            """(?:[a-zA-Z0-9_]{2,}\s{0,}=\s{0,}[a-zA-Z0-9_]{2,}\s{0,};)"""  # Find: var1 = var2;
+            """(?:[a-zA-Z0-9_]{1,}\s{0,}=\s{0,}(?:[a-zA-Z0-9_]{1,}\s{0,}\+\s{0,}){1,}[a-zA-Z0-9_]{1,}\s{0,};)|"""  # Find: var1 = var2+var3+var4;
+            """(?:[a-zA-Z0-9_]{1,}\s{0,}=\s{0,}[a-zA-Z0-9_]{1,}\s{0,};)"""  # Find: var1 = var2;
             , re.MULTILINE
         )
     
@@ -477,7 +477,7 @@ def gootDecode(path):
     if gootloader21sample:
         # Some variants have the final variable in the middle of the code. Search for it separately so that it shows up last.
         lastConcatPattern = re.compile(
-            """(?:^\t[a-zA-Z0-9_]{2,}\s{0,}=(?:\s{0,}\(?[a-zA-Z0-9_]{2,}\s{0,}\+?\s{0,}){5,}\s{0,}\)?;)"""  # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
+            """(?:^\t[a-zA-Z0-9_]{1,}\s{0,}=(?:\s{0,}\(?[a-zA-Z0-9_]{1,}\s{0,}\+?\s{0,}){5,}\s{0,}\)?;)"""  # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
             , re.MULTILINE
         )
         
@@ -499,7 +499,6 @@ def gootDecode(path):
     # Write output file 
     with open(round2FileName, mode="w") as file:
         file.write(round2Code)
-
 
 gootDecode(args.jsFilePath)
 
