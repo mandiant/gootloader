@@ -52,6 +52,7 @@ Gootloader Obfuscation Variant 3:
 ea2271179e75b652cafd8648b698c6f9
 c07b581fde56071e05754eef450dfa17
 8d29be5bccda884c5abbba52fc1f038c
+b20162ee69b06184d87dc2f5665f5c80
 ```
 
 # Registry Payload Decoding
