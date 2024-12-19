@@ -204,6 +204,15 @@ def getFileandTaskData(inputString):
     if 'noitcnuf' in inputString:
         inputString = inputString[::-1]
     
+    # New samples like b20162ee69b06184d87dc2f5665f5c80 have added another character replacement 
+    charReplacementRegex = re.compile(r'''\.replace\(\/(.)\/g,\s?['"](.)['"]\)''') # Find: .replace(/!/g, 'e')
+
+    charReplacementResult = charReplacementRegex.search(inputString)
+
+    # Replace the chars in the input strings with those from the regex result
+    if charReplacementResult:
+        inputString = inputString.replace(charReplacementResult.group(1), charReplacementResult.group(2))
+
     # Find the string that has been joined together with a delimiter (usually by |)
     # some new samples are using @ as a separator rather than | : MD5: d5e60e0941ebcef5436406a7ecf1d0f1
     regexPatternAndDelimiter = [
@@ -224,7 +233,6 @@ def getFileandTaskData(inputString):
             logger.debug("Reached the last FileAndTaskData delimiter without getting a hit.")
             return None
 
-    
     # un-rotate the strings
     fixedStrings = []
     for i in range(len(splitTextArray)):
