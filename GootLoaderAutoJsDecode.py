@@ -32,8 +32,6 @@
 # under the License.
 #
 ############################
-# pylint: disable=g-line-too-long
-# pylint: disable=invalid-name
 
 import argparse
 import re
