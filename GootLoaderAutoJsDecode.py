@@ -4,8 +4,8 @@
 # author            : @andy2002a - Andy Morales
 # author            : @g0vandS - Govand Sinjari
 # date              : 2023-01-13
-# updated           : 2024-12-18
-# version           : 3.7.5
+# updated           : 2025-11-05
+# version           : 3.8.1
 # usage             : python GootLoaderAutoJsDecode.py malicious.js
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
@@ -35,7 +35,6 @@ parser.add_argument('jsFilePath', help='Path to the GOOTLOADER JS file.')
 args = parser.parse_args()
 
 goot3detected = False
-
 
 def defang(input):
     if not input.strip():
@@ -216,8 +215,8 @@ def getFileandTaskData(inputString):
     # Find the string that has been joined together with a delimiter (usually by |)
     # some new samples are using @ as a separator rather than | : MD5: d5e60e0941ebcef5436406a7ecf1d0f1
     regexPatternAndDelimiter = [
-        [r'''"((?:.{3,30}?\|.{3,30}){5,})";''',"|"], # Find: "text|text2|text3";
-        [r'''"((?:.{3,30}?\@.{3,30}){5,})";''',"@"]  # Find: "text@text2@text3";
+        [r'''(?<=\=)\s?"((?:.{3,30}?\|.{3,30}){5,})";''',"|"], # Find: "text|text2|text3";
+        [r'''(?<=\=)\s?"((?:.{3,30}?\@.{3,30}){5,})";''',"@"]  # Find: "text@text2@text3";
         ]
 
     for patternDelim in regexPatternAndDelimiter:
@@ -255,39 +254,66 @@ def getFileandTaskData(inputString):
     taskCreationRegexPattern = re.compile(
         '''\((\w+),\s?(\w+),\s?6,\s['"]{2}\s?,\s?['"]{2}\s?,\s?3\s?\)'''  # Find: (str1, str2, 6, "" , "" , 3)
     )
-    taskCreationVarname = taskCreationRegexPattern.search(inputString).group(1)
-    taskNameOffsetPattern = re.compile(
-        '''\}''' + taskCreationVarname + '''\s?=\s\w{1,2}\((\d{1,3})\);'''  # Find: }str1 = Z(41);
+
+    taskCreationResult = taskCreationRegexPattern.search(inputString)
+
+    # Newer variants use an LNK file
+    lnkPersistancePattern = re.compile(
+      r'''\(\w+,\s?\w+\s?\+\s?['"]\\\\['"]\s?\+\s?(\w+)\s?\+\s?\w\(\d{1,3}\)\)''' # Find (BBBB, CCCC + '\\' + AAAAAA + f(40))  ## Where AAAAAAA is the variable we want
     )
-    
-    taskNameOffsetMatch = taskNameOffsetPattern.search(inputString)
-    
-    if taskNameOffsetMatch:
-        taskNameOffset = int(taskNameOffsetMatch.group(1))
-        scheduledTaskName = fixedStrings[taskNameOffset]
-    else:
+
+    lnkPersistanceResult = lnkPersistancePattern.search(inputString)
+
+    persistenceVariableName = ''
+    persistenceType = 'N/A'
+
+    if taskCreationResult:
+      persistenceVariableName = taskCreationResult.group(1)
+      persistenceType = 'Scheduled Task'
+    elif lnkPersistanceResult:
+      persistenceVariableName = lnkPersistanceResult.group(1)
+      persistenceType = 'LNK File'
+
+    if persistenceVariableName:
+      persistenceOffsetPattern = re.compile(
+          '''\}''' + persistenceVariableName + '''\s?=\s\w{1,2}\((\d{1,3})\);'''  # Find: }str1 = Z(41);
+      )
+
+      persistenceOffsetMatch = persistenceOffsetPattern.search(inputString)
+
+      if persistenceOffsetMatch:
+        persistenceOffset = int(persistenceOffsetMatch.group(1))
+        persistenceItemName = fixedStrings[persistenceOffset]
+        if lnkPersistanceResult:
+          persistenceItemName += '.lnk'
+      else:
         # MD5 9565187442f857bd47c8ab0859009752 had the task name in plain text
-        taskNameStrPattern = re.compile(
-            '''\}''' + taskCreationVarname + '''\s?=\s"(.{10,232})";'''  # Find: }str1 = "Task Name";
+        persistenceStrPattern = re.compile(
+            '''\}''' + persistenceVariableName + '''\s?=\s"(.{10,232})";'''  # Find: }str1 = "Task Name";
         )
-        taskNameStrMatch = taskNameStrPattern.search(inputString)
-        if taskNameStrMatch:
-            scheduledTaskName = taskNameStrMatch.group(1)
+        persistenceStrMatch = persistenceStrPattern.search(inputString)
+        if persistenceStrMatch:
+          persistenceItemName = persistenceStrMatch.group(1)
         else:
-            scheduledTaskName = 'NOT FOUND'
+          persistenceItemName = 'NOT FOUND'
+          persistenceType = 'N/A'
+    else:
+      persistenceItemName = 'NOT FOUND'
+      persistenceType = 'N/A'
+
+    Stage2Data = 'File and Persistence data:\n'
     
-    Stage2Data = 'File and Scheduled task data:\n'
+    FilePersistenceFileName = 'FileAndPersistenceData.txt'
     
-    FileTaskFileName = 'FileAndTaskData.txt'
+    Stage2Data += '\nFirst File Name:         ' + s2FirstFileName
+    Stage2Data += '\nJS File Name:            ' + s2JsFileName
+    Stage2Data += '\nPersistance Item Name:   ' + persistenceItemName
+    Stage2Data += '\nPersistance Type:        ' + persistenceType
     
-    Stage2Data += '\nFirst File Name:       ' + s2FirstFileName
-    Stage2Data += '\nJS File Name:          ' + s2JsFileName
-    Stage2Data += '\nScheduled Task Name:   ' + scheduledTaskName
-    
-    with open(FileTaskFileName, mode="w") as file:
+    with open(FilePersistenceFileName, mode="w") as file:
         file.write(Stage2Data)
     
-    Stage2Data += '\n\nData Saved to: ' + FileTaskFileName
+    Stage2Data += '\n\nData Saved to: ' + FilePersistenceFileName
     
     print('\n'+Stage2Data+'\n')
 
@@ -349,9 +375,7 @@ def findCodeMatchInRound1Result(inputStr):
     findCodeinQuotePattern = re.compile(
         r"(?<!\\)(?:\\\\)*'([^'\\]*(?:\\.[^'\\]*)*)'"
     )
-    
-    outputStr = findCodeinQuotePattern.findall(inputStr)[0]
-    
+    outputStr = max(findCodeinQuotePattern.findall(inputStr), key=len) #Return the longest string since that is the one that will contain the data
     return outputStr
         
 
@@ -423,6 +447,9 @@ def parseRound2Data(round2InputStr, round1InputStr, variablesDict, isGootloader3
     else:
         if isGootloader3sample:
             outputCode = round2InputStr.replace("'+'",'').replace("')+('",'').replace("+()+",'').replace("?+?",'')
+
+            # new samples have added this character replacement, might be worth doing this programmatically in the future
+            outputCode = outputCode.replace('~+~','') 
             
             # Check to see if the code has been reversed, and reverse it back to normal if so
             # Sample MD5: 2e6e43e846c5de3ecafdc5f416b72897
@@ -485,7 +512,10 @@ def gootDecode(path):
     if gootloader21sample:
         # Some variants have the final variable in the middle of the code. Search for it separately so that it shows up last.
         lastConcatPattern = re.compile(
-            """(?:^\t[a-zA-Z0-9_]{1,}\s{0,}=(?:\s{0,}\(?[a-zA-Z0-9_]{1,}\s{0,}\+?\s{0,}){5,}\s{0,}\)?;)"""  # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
+            # This is split into 2 regex because the lookbehind must be a fixed length
+            """(?:(?<=\t)\s*\w+\s*=\s*\(?\w+(?:\s?\+\s?\w+)+\)?;)|"""       # Find: [tab]var1 = var2+var3+var4+var5+var6+var7;
+            """(?:(?<=\)\{)\s*\w+\s*=\s*\(?\w+(?:\s?\+\s?\w+)+\)?;)"""      # Find: ){var1 = var2+var3+var4+var5+var6+var7;
+                                                                            # Find: ){var1 = (var2+var3+var4+var5+var6+var7);
             , re.MULTILINE
         )
         
