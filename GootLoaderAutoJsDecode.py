@@ -32,6 +32,11 @@
 # under the License.
 #
 ############################
+# pylint: disable=g-line-too-long
+# pylint: disable=invalid-name
+# pylint: disable=bad-indentation
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
 
 import argparse
 import re
@@ -226,9 +231,13 @@ def getFileandTaskData(inputString):
     # Find the string that has been joined together with a delimiter (usually by |)
     # some new samples are using @ as a separator rather than | : MD5: d5e60e0941ebcef5436406a7ecf1d0f1
     regexPatternAndDelimiter = [
-        [r'''(?<=\=)\s?"((?:.{3,30}?\|.{3,30}){5,})";''', '|'],  # Find: "text|text2|text3";
-        [r'''(?<=\=)\s?"((?:.{3,30}?\@.{3,30}){5,})";''', '@']   # Find: "text@text2@text3";
-        ]
+        # [r'''(?<=\=)\s?"((?:.{3,30}?\|.{3,30}){5,})";''', '|'],  # Find: "text|text2|text3";
+        # [r'''(?<=\=)\s?"((?:.{3,30}?\@.{3,30}){5,})";''', '@']   # Find: "text@text2@text3";
+
+        # The previous patters would sometimes causes the regex to hang. Testing this one out to see if it is better.
+        [r'''(?<=\=)\s?"([\w~\.\s%]+(?:\|[\w~\.\s%]+)+)";''', '|'],  # Find: "text|text2|text3";
+        [r'''(?<=\=)\s?"([\w~\.\s%]+(?:\@[\w~\.\s%]+)+)";''', '@']   # Find: "text@text2@text3";
+    ]
 
     for patternDelim in regexPatternAndDelimiter:
         separationResult = separateFileAndTaskString(patternDelim[0], patternDelim[1], inputString)
