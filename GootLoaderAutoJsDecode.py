@@ -10,7 +10,7 @@
 # output            : DecodedJsPayload.js_ and GootLoader3Stage2.js_
 # py version        : 3
 #
-# Note: To make JS files readable, you can use CyberChef JavaScript or 
+# Note: To make JS files readable, you can use CyberChef JavaScript or
 # Generic Code Beautify
 #
 ############################
@@ -19,16 +19,16 @@
 #
 # Copyright 2023 Mandiant.  All Rights Reserved
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); you may not 
-# use this file except in compliance with the License. You may obtain a copy 
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy
 # of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT 
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
-# License for the specific language governing permissions and limitations 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
 # under the License.
 #
 ############################
@@ -71,7 +71,7 @@ def defang(input_str):
     result = re.compile("([^\\[])\\.([^\\]])").sub(r'''\1[.]\2''', start) + end
 
     # but not all! http://0x7f000001 ([^\[]):([^\]])
-    #result = result.replaceAll(new RegExp("([^\\[]):([^\\]])", 'g'), "$1[:]$2");
+    # result = result.replaceAll(new RegExp("([^\\[]):([^\\]])", 'g'), "$1[:]$2");
     result = re.compile(r'''([^\\[]):([^\\]])''').sub(r'''\1[:]\2''', result)
     if result.lower().startswith('http'):
         result = result.replace('https', 'hxxps')
@@ -92,13 +92,13 @@ def ConvertVarsToDict(inArray):
 def convertConcatToString(inputConcatMatches, inputVarsDict, noEquals=False):
     # Joins multiple concat operations into a string
 
-    # V3 matches do not have an equal sign so add some dummy text 
+    # V3 matches do not have an equal sign so add some dummy text
     if noEquals:
         dummyEquals = 'dummy='+inputConcatMatches.replace('(', '').replace(')', '')
         inputConcatMatches = [dummyEquals]
 
     for index, concatItem in enumerate(inputConcatMatches):
-        # Remove any unwanted characters and split on '=' 
+        # Remove any unwanted characters and split on '='
 
         splitItem = re.sub(r'[;\s\(\)]', '', concatItem).split('=')
 
@@ -132,7 +132,7 @@ def decodeString(scripttext):
     return ans
 
 
-def rotateSplitText (string, count):
+def rotateSplitText(string, count):
     for i in range(count+1):
         string = string[1:]+string[0]
     return str(string)
@@ -148,7 +148,7 @@ def remainder(v1, v2, v3):
     return rtn
 
 
-def rtrSub(inputStr, idx1): 
+def rtrSub(inputStr, idx1):
     # use this odd format of substring so that it matches the way JS works
     return inputStr[idx1:(idx1+1)]
 
@@ -162,7 +162,7 @@ def workFunc(inputStr):
 
 
 def findFileInStr(fileExtension, stringToSearch):
-    fileExtensionPattern = re.compile(r'''["']([a-zA-Z0-9_\-\s]+\.''' + fileExtension + ''')["']''')  ## Find: "Example Engineering.log"
+    fileExtensionPattern = re.compile(r'''["']([a-zA-Z0-9_\-\s]+\.''' + fileExtension + r''')["']''')  ## Find: "Example Engineering.log"
     regexMatch = fileExtensionPattern.search(stringToSearch)
     if (regexMatch):
         dataFound = regexMatch.group(1)
@@ -172,7 +172,7 @@ def findFileInStr(fileExtension, stringToSearch):
 
 
 def getGootVersion(topFileData):
-    goot3linesRegex = """GOOT3"""
+    goot3linesRegex = 'GOOT3'
     goot3linesPattern = re.compile(goot3linesRegex, re.MULTILINE)
 
     gloader3sample = False
@@ -214,8 +214,8 @@ def getFileandTaskData(inputString):
     if 'noitcnuf' in inputString:
         inputString = inputString[::-1]
 
-    # New samples like b20162ee69b06184d87dc2f5665f5c80 have added another character replacement 
-    charReplacementRegex = re.compile(r'''\.replace\(\/(.)\/g,\s?['"](.)['"]\)''') # Find: .replace(/!/g, 'e')
+    # New samples like b20162ee69b06184d87dc2f5665f5c80 have added another character replacement
+    charReplacementRegex = re.compile(r'''\.replace\(\/(.)\/g,\s?['"](.)['"]\)''')  # Find: .replace(/!/g, 'e')
 
     charReplacementResult = charReplacementRegex.search(inputString)
 
@@ -226,8 +226,8 @@ def getFileandTaskData(inputString):
     # Find the string that has been joined together with a delimiter (usually by |)
     # some new samples are using @ as a separator rather than | : MD5: d5e60e0941ebcef5436406a7ecf1d0f1
     regexPatternAndDelimiter = [
-        [r'''(?<=\=)\s?"((?:.{3,30}?\|.{3,30}){5,})";''', '|'], # Find: "text|text2|text3";
-        [r'''(?<=\=)\s?"((?:.{3,30}?\@.{3,30}){5,})";''', '@']  # Find: "text@text2@text3";
+        [r'''(?<=\=)\s?"((?:.{3,30}?\|.{3,30}){5,})";''', '|'],  # Find: "text|text2|text3";
+        [r'''(?<=\=)\s?"((?:.{3,30}?\@.{3,30}){5,})";''', '@']   # Find: "text@text2@text3";
         ]
 
     for patternDelim in regexPatternAndDelimiter:
@@ -235,7 +235,7 @@ def getFileandTaskData(inputString):
 
         if separationResult:
             splitTextArray = separationResult
-            #exit the loop if we get a hit
+            # exit the loop if we get a hit
             break
 
         if patternDelim == regexPatternAndDelimiter[-1]:
@@ -254,7 +254,7 @@ def getFileandTaskData(inputString):
         elif fixedString.endswith('.js'):
             s2JsFileName = fixedString
 
-    #In some instances the .log/.js file was outside of the "|" separated string. Try to find it outside
+    # In some instances the .log/.js file was outside of the "|" separated string. Try to find it outside
     if 's2FirstFileName' not in locals():
         s2FirstFileName = findFileInStr('(?:log|dat)', inputString)
     if 's2JsFileName' not in locals():
@@ -356,7 +356,7 @@ def invokeStage2Decode(inputString, inputVarsDict):
     )
     str1to1NewLine = re.sub(strVar1to1Pattern, r'\n\1\n', finalStrConcNewLine)
 
-    # put long digits on their own lines 
+    # put long digits on their own lines
     strLongDigitPattern = re.compile(
         r''';(\d{15,};)'''  # Find: ;216541846845465456465121312313221456456465;
     )
@@ -380,8 +380,9 @@ def findCodeMatchInRound1Result(inputStr):
     findCodeinQuotePattern = re.compile(
         r"(?<!\\)(?:\\\\)*'([^'\\]*(?:\\.[^'\\]*)*)'"
     )
-    outputStr = max(findCodeinQuotePattern.findall(inputStr), key=len) #Return the longest string since that is the one that will contain the data
+    outputStr = max(findCodeinQuotePattern.findall(inputStr), key=len)  # Return the longest string since that is the one that will contain the data
     return outputStr
+
 
 def getVariableAndConcatPatterns(isGloader21Sample):
     if isGloader21Sample:
@@ -450,7 +451,7 @@ def parseRound2Data(round2InputStr, round1InputStr, variablesDict, isGootloader3
         print('\nThe script will new attempt to deobfuscate the %s file.' % outputFileName)
     else:
         if isGootloader3sample:
-            outputCode = round2InputStr.replace("'+'", '').replace("')+('", '').replace("+()+", '').replace("?+?", '')
+            outputCode = round2InputStr.replace("'+'", '').replace("')+('", '').replace('+()+', '').replace('?+?', '')
 
             # new samples have added this character replacement, might be worth doing this programmatically in the future
             outputCode = outputCode.replace('~+~', '')
@@ -459,6 +460,18 @@ def parseRound2Data(round2InputStr, round1InputStr, variablesDict, isGootloader3
             # Sample MD5: 2e6e43e846c5de3ecafdc5f416b72897
             if 'sptth' in outputCode:
                 outputCode = outputCode[::-1]
+
+            powershell_cookie_identifier = extract_cookie_identifier(outputCode)
+            cookie_identifier_string = 'Cookie Identifier: %s' % powershell_cookie_identifier
+            print('\n' + cookie_identifier_string)
+
+            user_agent = extract_user_agent(outputCode)
+            user_agent_string = 'User Agent:        %s' % user_agent
+            print(user_agent_string)
+
+            # Write output file
+            with open('PowerShell_Network_IOCs.txt', mode='w') as file:
+                file.write(cookie_identifier_string+'\n'+user_agent_string)
 
             v3DomainRegex = re.compile(
                 r'''(?:(?:https?):\/\/)[^\[|^\]|^\/|^\\|\s]*\.[^'"]+'''
@@ -472,7 +485,7 @@ def parseRound2Data(round2InputStr, round1InputStr, variablesDict, isGootloader3
                 r'(.*)(\[\".*?\"\])(.*)'
             )
             domainsMatch = v2DomainRegex.search(round2InputStr)[2]
-            maliciousDomains = domainsMatch.replace('[', '').replace(']', '').replace('\"', '').replace('+(', '').replace(')+', '').split(',')
+            maliciousDomains = domainsMatch.replace('[', '').replace(']', '').replace('"', '').replace('+(', '').replace(')+', '').split(',')
 
         outputFileName = 'DecodedJsPayload.js_'
 
@@ -486,6 +499,135 @@ def parseRound2Data(round2InputStr, round1InputStr, variablesDict, isGootloader3
 
         print('\nMalicious Domains: \n\n%s' % outputDomains)
     return outputCode, outputFileName
+
+
+def extract_obfuscated_ps_array(input_str):
+    # Extracts an array of obfuscated arrays from the larger PowerShell code
+
+    powershell_string_array_regex = re.compile(
+        # this regex will probably need updating when payloads start changing
+        r'''(?<=join\(\()"(.+?)"\|%{'''  # Find: join(("str","str","str"|%{
+        # The capture group purposely excludes the first and last quote. This makes the .split() operation easier
+    )
+
+    powershell_string_match = powershell_string_array_regex.search(input_str)
+
+    if (powershell_string_match):
+        powershell_string = powershell_string_match.group(1)
+    else:
+        powershell_string = ''
+
+    output_array = powershell_string.split('","')
+
+    return output_array
+
+
+def decode_powershell_array(input_array, index_num):
+    # Decodes a string that has been split across several arrays
+    # Sample input:
+    #
+    # 'ne!he'
+    # 'wOb!ll'
+    # 'ject|o'
+    #
+    # Output:
+    #
+    # func(0) = newObject
+    # func(1) = hello
+
+    split_delimiter = '!'  # This is what current payloads are using.
+
+    new_2d_array = []
+    output_string = ''
+
+    for i in range(len(input_array)):
+        new_2d_array.insert(i, input_array[i].split(split_delimiter))
+
+    # This can probably be part of the previous loop but separating to make debugging easier later
+    for i in range(len(new_2d_array)):
+        output_string += new_2d_array[i][index_num]
+
+    return output_string
+
+
+def extract_cookie_identifier(input_str):
+    # The cookie variable is in a code arrea that looks like:
+    # $tRuUcQ=$JXTLNoRq;
+    # $tRuUcQ`1=$bTDNv;
+    # $tRuUcQ`2=$Uivf;
+    # $tRuUcQ`3=$MVbnBAb;
+    # $tRuUcQ`4=$fPZxM");
+
+    cookie_identifier = 'N/A'
+
+    cookie_variable_regex = re.compile(
+        r'''(?<=\$)(\w+?)(?=`1)'''  # Find: $str`1
+    )
+
+    cookie_variable_match = cookie_variable_regex.search(input_str)
+
+    if cookie_variable_match:
+        cookie_variable_name = cookie_variable_match.group(1)
+    else:
+        # match failed, return N/A
+        return cookie_identifier
+
+    cookie_offset_regex = re.compile(
+        # looks for the variable name being set as a result of a function exec. Where 18 is the cookie offset
+        (r'''(?<=\$''' + cookie_variable_name + r'''=\(\w\s)\d{1,2}''')  # Find: $str=(N 18)
+    )
+
+    cookie_offset_match = cookie_offset_regex.search(input_str)
+
+    if cookie_offset_match:
+        cookie_offset = int(cookie_offset_match.group(0))
+    else:
+        # match failed, return N/A
+        return cookie_identifier
+
+    powershell_ofuscated_array = extract_obfuscated_ps_array(input_str)
+
+    cookie_identifier = decode_powershell_array(powershell_ofuscated_array, cookie_offset)
+
+    return cookie_identifier
+
+
+def extract_user_agent(input_str):
+    output_string = 'N/A'
+
+    user_agent_concat_regex = re.compile(
+        r'''(?<=useragent=)\(\w\s\d{1,2}\)(\+\(\w\s\d{1,2}\))+''',  # Find: .USeraGeNt=(Y 14)+(Y 25)+(Y 4)+(Y 8)
+        re.IGNORECASE
+    )
+
+    user_agent_concat_match = user_agent_concat_regex.search(input_str)
+
+    if user_agent_concat_match:
+        user_agent_concat = user_agent_concat_match.group(0)
+    else:
+        # match failed, return an empty string
+        return output_string
+
+    all_user_agent_index_regex = re.compile(
+        r'''\d{1,2}'''  # Find: (Y 14)
+    )
+
+    all_user_agent_index_match = all_user_agent_index_regex.findall(user_agent_concat)
+
+    if all_user_agent_index_match:
+
+        output_string = ''
+
+        powershell_ofuscated_array = extract_obfuscated_ps_array(input_str)
+
+        for i in all_user_agent_index_match:
+            output_string += decode_powershell_array(powershell_ofuscated_array, int(i))
+
+        return output_string
+    else:
+        # match failed, return an empty string
+        return output_string
+
 
 def gootDecode(path):
     # Open File
@@ -533,12 +675,12 @@ def gootDecode(path):
     # Find code text in the result of the first decode round
     CodeMatch = findCodeMatchInRound1Result(round1Result)
 
-    # run the decode function against the previous result 
+    # run the decode function against the previous result
     round2Result = decodeString(CodeMatch.encode('raw_unicode_escape').decode('unicode_escape'))
 
     round2Code, round2FileName = parseRound2Data(round2Result, round1Result, VarsDict, gootloader3sample)
 
-    # Write output file 
+    # Write output file
     with open(round2FileName, mode='w') as file:
         file.write(round2Code)
 
