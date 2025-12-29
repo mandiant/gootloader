@@ -315,6 +315,19 @@ def getFileandTaskData(inputString):
             if persistenceStrMatch:
                 persistenceItemName = persistenceStrMatch.group(1)
 
+    # Get hotkey combination 
+    hotkeyPattern = re.compile(
+        r'''\.hotkey=["'](\w+(?:\+\w+)+)["']''',  # Find .Hotkey="CTRL+RR+E"
+        flags=re.IGNORECASE
+    )
+
+    hotkeyResult = hotkeyPattern.search(inputString)
+
+    if hotkeyResult:
+        hotkeyCombination = hotkeyResult.group(1)
+    else:
+        hotkeyCombination = 'N/A'
+
     Stage2Data = 'File and Persistence data:\n'
 
     FilePersistenceFileName = 'FileAndPersistenceData.txt'
@@ -323,6 +336,7 @@ def getFileandTaskData(inputString):
     Stage2Data += '\nJS File Name:            ' + s2JsFileName
     Stage2Data += '\nPersistence Item Name:   ' + persistenceItemName
     Stage2Data += '\nPersistence Type:        ' + persistenceType
+    Stage2Data += '\nHotkey:                  ' + hotkeyCombination
 
     with open(FilePersistenceFileName, mode='w') as file:
         file.write(Stage2Data)
